@@ -1,32 +1,40 @@
-# React + TypeScript + Vite
+# Shree Balaje Brokerage Deal Management System
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Real-world web application for a Bihar grain brokerage business. The product baseline is in [the workflow and data-model document](docs/business-workflow-data-model-v1.md).
 
-Currently, two official plugins are available:
+## Current milestone
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+The local interface supports the Milestone 1 workflow: Parties, quick Deal entry, explicit stage changes, cancellation history, partial payment entries, offers/requirements, transport reference data, To-Do items, Daily Register CSV export, and a printable monthly view.
 
-## React Compiler
+The repository also includes a production PostgreSQL/Supabase migration with authentication-linked ownership and Row Level Security. Cloud synchronization is not activated until a Supabase project is configured.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Run locally
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```powershell
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Run quality checks with:
+
+```powershell
+npm run build
+npm run lint
+```
+
+## Configure cloud data
+
+1. Create a Supabase project.
+2. In its SQL editor, run [the initial migration](supabase/migrations/20260906_initial_brokerage_schema.sql).
+3. Copy `.env.example` to `.env.local` and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` from the project Connect panel.
+4. Restart the local dev server.
+
+Do not commit `.env.local`, service-role/secret keys, or real business data. The browser only needs the publishable key; Row Level Security protects records for authenticated users.
+
+## Important project rules
+
+- Do not delete or silently overwrite historical transactions.
+- A deal starts in `Matching`; status changes remain user-controlled.
+- Commodity, buyer commission, and seller commission are separate ledgers.
+- Driver names are intentionally not stored.
+- Before material changes, create and test a Git checkpoint.
