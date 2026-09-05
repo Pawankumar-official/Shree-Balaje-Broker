@@ -25,6 +25,10 @@ In progress — Milestone 1 interface foundation.
 
 ## Unreleased
 
+### Added
+
+- Business Workflow & Data Model v1.0 design baseline for the next Milestone 1 slice.
+
 ### Changed
 
 - Daily deal display numbering resets each business day: `1, 2, 3…`.
