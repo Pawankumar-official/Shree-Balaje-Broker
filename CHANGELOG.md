@@ -32,6 +32,8 @@ In progress — Milestone 1 interface foundation.
 - Deal workspace actions for transport trips and commodity payments.
 - Cancellation safeguards: a cancellation reason is required; historical trips and payments remain visible; cancelled Deals cannot receive new trips, payments, or stage changes.
 - Separate commodity, buyer commission, and seller commission ledgers with independent obligations, partial payments and calculated outstanding balances.
+- Transporter and Truck entry, with driver-phone-only records and derived transporter + route freight history.
+- Daily Register CSV export, print-ready Monthly Ledger totals, and simple To-Do entry.
 
 ### Changed
 
