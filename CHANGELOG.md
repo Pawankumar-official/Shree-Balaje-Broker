@@ -28,6 +28,9 @@ In progress — Milestone 1 interface foundation.
 ### Added
 
 - Business Workflow & Data Model v1.0 design baseline for the next Milestone 1 slice.
+- Party business-history profiles and manual Offer / Requirement entry.
+- Deal workspace actions for transport trips and commodity payments.
+- Cancellation safeguards: a cancellation reason is required; historical trips and payments remain visible; cancelled Deals cannot receive new trips, payments, or stage changes.
 
 ### Changed
 
