@@ -6,6 +6,7 @@
 - The broker explicitly changes the Deal stage.
 - Entering a Deal never creates transport, payments, offers or requirements automatically.
 - The form allows transport/payment details to be unknown at creation time.
+- Daily serial numbers reset for each business day. Monthly accounting serial numbers continue throughout the month.
 
 ## Next build slice
 

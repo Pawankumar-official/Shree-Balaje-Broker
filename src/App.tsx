@@ -6,6 +6,9 @@ type DealStage = 'Matching' | 'Truck Assigned' | 'In Transit' | 'Delivered' | 'P
 
 type Deal = {
   id: string
+  dealDate: string
+  dailySerial: number
+  monthlySerial: number
   buyer: string
   seller: string
   commodity: string
@@ -21,10 +24,10 @@ type Deal = {
 const stages: DealStage[] = ['Matching', 'Truck Assigned', 'In Transit', 'Delivered', 'Payment Pending', 'Closed']
 
 const initialDeals: Deal[] = [
-  { id: 'SB-2026-001', buyer: 'Patna Rice Mill', seller: 'Kisan Traders', commodity: 'Paddy', quantity: 420, rate: 2350, route: 'Buxar → Patna', stage: 'In Transit', truck: 'BR 01 GK 4821', due: 0, expectedPayment: '08 Sep 2026' },
-  { id: 'SB-2026-002', buyer: 'Maa Durga Foods', seller: 'Bihar Agro', commodity: 'Wheat', quantity: 280, rate: 2680, route: 'Ara → Bihar Sharif', stage: 'Truck Assigned', truck: 'BR 21 GA 7612', due: 0, expectedPayment: '09 Sep 2026' },
-  { id: 'SB-2026-003', buyer: 'Shakti Rice Works', seller: 'Sonal Enterprises', commodity: 'Paddy', quantity: 610, rate: 2325, route: 'Sasaram → Patna', stage: 'Payment Pending', due: 425000, expectedPayment: '04 Sep 2026' },
-  { id: 'SB-2026-004', buyer: 'Ganga Foods', seller: 'Raj Grain House', commodity: 'Rice', quantity: 160, rate: 3520, route: 'Begusarai → Patna', stage: 'Matching', due: 0, expectedPayment: '12 Sep 2026' },
+  { id: 'record-17', dealDate: '2026-09-06', dailySerial: 1, monthlySerial: 17, buyer: 'Patna Rice Mill', seller: 'Kisan Traders', commodity: 'Paddy', quantity: 420, rate: 2350, route: 'Buxar → Patna', stage: 'In Transit', truck: 'BR 01 GK 4821', due: 0, expectedPayment: '08 Sep 2026' },
+  { id: 'record-18', dealDate: '2026-09-06', dailySerial: 2, monthlySerial: 18, buyer: 'Maa Durga Foods', seller: 'Bihar Agro', commodity: 'Wheat', quantity: 280, rate: 2680, route: 'Ara → Bihar Sharif', stage: 'Truck Assigned', truck: 'BR 21 GA 7612', due: 0, expectedPayment: '09 Sep 2026' },
+  { id: 'record-19', dealDate: '2026-09-06', dailySerial: 3, monthlySerial: 19, buyer: 'Shakti Rice Works', seller: 'Sonal Enterprises', commodity: 'Paddy', quantity: 610, rate: 2325, route: 'Sasaram → Patna', stage: 'Payment Pending', due: 425000, expectedPayment: '04 Sep 2026' },
+  { id: 'record-20', dealDate: '2026-09-06', dailySerial: 4, monthlySerial: 20, buyer: 'Ganga Foods', seller: 'Raj Grain House', commodity: 'Rice', quantity: 160, rate: 3520, route: 'Begusarai → Patna', stage: 'Matching', due: 0, expectedPayment: '12 Sep 2026' },
 ]
 
 const money = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })
@@ -50,9 +53,14 @@ function App() {
   const createDeal = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
-    const nextNumber = String(deals.length + 1).padStart(3, '0')
+    const dealDate = '2026-09-06'
+    const sameDayDeals = deals.filter((deal) => deal.dealDate === dealDate)
+    const sameMonthDeals = deals.filter((deal) => deal.dealDate.slice(0, 7) === dealDate.slice(0, 7))
     const newDeal: Deal = {
-      id: `SB-2026-${nextNumber}`,
+      id: `record-${Date.now()}`,
+      dealDate,
+      dailySerial: Math.max(0, ...sameDayDeals.map((deal) => deal.dailySerial)) + 1,
+      monthlySerial: Math.max(0, ...sameMonthDeals.map((deal) => deal.monthlySerial)) + 1,
       buyer: String(form.get('buyer')),
       seller: String(form.get('seller')),
       commodity: String(form.get('commodity')),
@@ -63,9 +71,9 @@ function App() {
       due: 0,
       expectedPayment: String(form.get('expectedPayment')) || 'Not set',
     }
-    setDeals((current) => [newDeal, ...current])
+    setDeals((current) => [...current, newDeal])
     setDealFormOpen(false)
-    setToast(`${newDeal.id} created in Matching. Add transport and payments when known.`)
+    setToast(`Daily no. ${newDeal.dailySerial} / monthly no. ${newDeal.monthlySerial} created in Matching.`)
   }
 
   const attentionDeals = deals.filter((deal) => deal.stage === 'Matching' || deal.stage === 'Payment Pending')
@@ -102,22 +110,22 @@ function App() {
         <section className="content-grid">
           <div className="panel active-deals">
             <div className="panel-heading"><div><p className="eyebrow">WORKING NOW</p><h2>Active Deals</h2></div><button className="text-button" onClick={() => setActiveNav('Deals')}>View all →</button></div>
-            <div className="table-wrap"><table><thead><tr><th>Deal</th><th>Buyer / Seller</th><th>Commodity</th><th>Route</th><th>Status</th><th></th></tr></thead><tbody>
-              {deals.slice(0, 5).map((deal) => <tr key={deal.id}><td><strong>{deal.id}</strong><small>{deal.quantity} Qtl · {money.format(deal.rate)}/Qtl</small></td><td><strong>{deal.buyer}</strong><small>{deal.seller}</small></td><td>{deal.commodity}</td><td>{deal.route}</td><td><span className={`status status-${deal.stage.toLowerCase().replace(' ', '-')}`}>{deal.stage}</span></td><td><select value={deal.stage} aria-label={`Update stage for ${deal.id}`} onChange={(event) => updateStage(deal.id, event.target.value as DealStage)}>{stages.map((stage) => <option key={stage}>{stage}</option>)}</select></td></tr>)}
+            <div className="table-wrap"><table><thead><tr><th>Daily No.</th><th>Buyer / Seller</th><th>Commodity</th><th>Route</th><th>Status</th><th></th></tr></thead><tbody>
+              {deals.slice(0, 5).map((deal) => <tr key={deal.id}><td><strong>{deal.dailySerial}</strong><small>Monthly no. {deal.monthlySerial} · {deal.quantity} Qtl</small></td><td><strong>{deal.buyer}</strong><small>{deal.seller}</small></td><td>{deal.commodity}<small>{money.format(deal.rate)}/Qtl</small></td><td>{deal.route}</td><td><span className={`status status-${deal.stage.toLowerCase().replace(' ', '-')}`}>{deal.stage}</span></td><td><select value={deal.stage} aria-label={`Update stage for daily deal number ${deal.dailySerial}`} onChange={(event) => updateStage(deal.id, event.target.value as DealStage)}>{stages.map((stage) => <option key={stage}>{stage}</option>)}</select></td></tr>)}
             </tbody></table></div>
           </div>
 
           <aside className="side-panels">
             <section className="panel attention"><div className="panel-heading"><div><p className="eyebrow">PRIORITY</p><h2>Attention Required</h2></div><span className="attention-count">{attentionDeals.length}</span></div>
-              {attentionDeals.slice(0, 3).map((deal) => <div className="attention-row" key={deal.id}><span className={deal.stage === 'Payment Pending' ? 'attention-icon overdue' : 'attention-icon'}>{deal.stage === 'Payment Pending' ? '₹' : '◇'}</span><div><strong>{deal.stage === 'Payment Pending' ? 'Payment follow-up' : 'Complete deal details'}</strong><p>{deal.id} · {deal.buyer}</p></div><button onClick={() => setToast(`Opening ${deal.id} is the next workflow step.`)}>→</button></div>)}
+              {attentionDeals.slice(0, 3).map((deal) => <div className="attention-row" key={deal.id}><span className={deal.stage === 'Payment Pending' ? 'attention-icon overdue' : 'attention-icon'}>{deal.stage === 'Payment Pending' ? '₹' : '◇'}</span><div><strong>{deal.stage === 'Payment Pending' ? 'Payment follow-up' : 'Complete deal details'}</strong><p>Daily no. {deal.dailySerial} · {deal.buyer}</p></div><button onClick={() => setToast(`Daily deal no. ${deal.dailySerial} is the next workflow step.`)}>→</button></div>)}
             </section>
             <section className="panel transport-card"><div><p className="eyebrow">TRANSPORT</p><h2>Truck activity</h2></div><div className="transport-stats"><span><strong>{deals.filter((deal) => deal.stage === 'Matching').length}</strong> Awaiting</span><span><strong>{deals.filter((deal) => deal.stage === 'Truck Assigned').length}</strong> Assigned</span><span><strong>{summary.transit}</strong> In transit</span></div><button className="secondary-button" onClick={() => setActiveNav('Transport')}>Manage transport</button></section>
           </aside>
         </section>
 
         <section className="bottom-grid">
-          <div className="panel register"><div className="panel-heading"><div><p className="eyebrow">SOURCE OF TRUTH</p><h2>Today’s Daily Register</h2></div><button className="text-button" onClick={() => setActiveNav('Daily Register')}>Open register →</button></div><div className="register-row"><span>06 Sep</span><strong>{deals.length} business records</strong><p>{summary.active} active · {summary.paymentPending} payment pending</p></div></div>
-          <div className="panel todo"><div className="panel-heading"><div><p className="eyebrow">FOLLOW-UPS</p><h2>To-Do</h2></div><button className="text-button">+ Add</button></div><label><input type="checkbox"/> Confirm unloading for SB-2026-001</label><label><input type="checkbox"/> Follow up ₹4,25,000 from Shakti Rice Works</label></div>
+          <div className="panel register"><div className="panel-heading"><div><p className="eyebrow">SOURCE OF TRUTH</p><h2>Today’s Daily Register</h2></div><button className="text-button" onClick={() => setActiveNav('Daily Register')}>Open register →</button></div><div className="register-row"><span>06 Sep</span><strong>Daily serials 1–{deals.length}</strong><p>Monthly serials continue from 17 · {summary.paymentPending} payment pending</p></div></div>
+          <div className="panel todo"><div className="panel-heading"><div><p className="eyebrow">FOLLOW-UPS</p><h2>To-Do</h2></div><button className="text-button">+ Add</button></div><label><input type="checkbox"/> Confirm unloading for daily no. 1</label><label><input type="checkbox"/> Follow up ₹4,25,000 from Shakti Rice Works</label></div>
         </section>
       </main>
 

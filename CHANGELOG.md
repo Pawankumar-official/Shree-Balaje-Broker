@@ -22,3 +22,11 @@ This is a local interface foundation only. It does not yet have authentication, 
 ### Status
 
 In progress — Milestone 1 interface foundation.
+
+## Unreleased
+
+### Changed
+
+- Daily deal display numbering resets each business day: `1, 2, 3…`.
+- Monthly accounting serials continue through the month, independent of the daily display number.
+- New deals are appended after the existing daily records.
