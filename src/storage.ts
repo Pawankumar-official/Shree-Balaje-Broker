@@ -7,7 +7,8 @@ const storageKey = 'shree-balaje-brokerage-data-v1'
 function loadData(): AppData {
   try {
     const saved = window.localStorage.getItem(storageKey)
-    return saved ? JSON.parse(saved) as AppData : demoData
+    const parsed = saved ? JSON.parse(saved) as Partial<AppData> : demoData
+    return { ...demoData, ...parsed, dealTrips: parsed.dealTrips ?? [] }
   } catch {
     return demoData
   }

@@ -1,9 +1,9 @@
 export type DealStage = 'Matching' | 'Truck Assigned' | 'In Transit' | 'Delivered' | 'Payment Pending' | 'Closed' | 'Cancelled'
-export type PartyRole = 'Buyer' | 'Seller' | 'Both'
 export type LedgerType = 'Commodity' | 'Buyer Commission' | 'Seller Commission'
 
-export type Party = { id: string; name: string; role: PartyRole; phone: string; location: string; trust: 'High' | 'Normal' | 'Watch'; notes: string }
+export type Party = { id: string; name: string; phone: string; location: string; trust: 'High' | 'Normal' | 'Watch'; notes: string }
 export type Deal = { id: string; dealDate: string; dailySerial: number; monthlySerial: number; buyerId: string; sellerId: string; commodity: string; quantity: number; rate: number; route: string; stage: DealStage; truck: string; expectedPayment: string; cancelledReason?: string }
+export type DealTrip = { id: string; dealId: string; transporterId: string; truckNumber: string; freight: number; assignedDate: string; notes: string }
 export type Payment = { id: string; dealId: string; ledger: LedgerType; amount: number; date: string; note: string }
 export type Transporter = { id: string; name: string; phone: string; routes: string; reliability: 'High' | 'Normal' | 'Watch' }
 export type Truck = { id: string; number: string; transporterId: string; capacity: string; driverPhone: string }
@@ -11,7 +11,7 @@ export type Offer = { id: string; sellerId: string; commodity: string; quantity:
 export type Requirement = { id: string; buyerId: string; commodity: string; quantity: number; targetRate: number; deliveryLocation: string; status: 'Open' | 'Converted' | 'Closed' }
 export type Todo = { id: string; text: string; done: boolean; due: string }
 
-export type AppData = { parties: Party[]; deals: Deal[]; payments: Payment[]; transporters: Transporter[]; trucks: Truck[]; offers: Offer[]; requirements: Requirement[]; todos: Todo[] }
+export type AppData = { parties: Party[]; deals: Deal[]; dealTrips: DealTrip[]; payments: Payment[]; transporters: Transporter[]; trucks: Truck[]; offers: Offer[]; requirements: Requirement[]; todos: Todo[] }
 
 export const today = '2026-09-06'
 export const stages: DealStage[] = ['Matching', 'Truck Assigned', 'In Transit', 'Delivered', 'Payment Pending', 'Closed']
@@ -19,12 +19,16 @@ export const currency = new Intl.NumberFormat('en-IN', { style: 'currency', curr
 
 export const demoData: AppData = {
   parties: [
-    { id: 'p1', name: 'Patna Rice Mill', role: 'Buyer', phone: '98765 41001', location: 'Patna', trust: 'High', notes: 'Regular paddy buyer' },
-    { id: 'p2', name: 'Kisan Traders', role: 'Seller', phone: '98765 41002', location: 'Buxar', trust: 'High', notes: 'Seasonal paddy supplier' },
-    { id: 'p3', name: 'Maa Durga Foods', role: 'Buyer', phone: '98765 41003', location: 'Bihar Sharif', trust: 'Normal', notes: '' },
-    { id: 'p4', name: 'Bihar Agro', role: 'Seller', phone: '98765 41004', location: 'Ara', trust: 'Normal', notes: '' },
-    { id: 'p5', name: 'Shakti Rice Works', role: 'Buyer', phone: '98765 41005', location: 'Patna', trust: 'Watch', notes: 'Follow up on outstanding' },
-    { id: 'p6', name: 'Sonal Enterprises', role: 'Seller', phone: '98765 41006', location: 'Sasaram', trust: 'Normal', notes: '' },
+    { id: 'p1', name: 'Patna Rice Mill', phone: '98765 41001', location: 'Patna', trust: 'High', notes: 'Regular paddy buyer' },
+    { id: 'p2', name: 'Kisan Traders', phone: '98765 41002', location: 'Buxar', trust: 'High', notes: 'Seasonal paddy supplier' },
+    { id: 'p3', name: 'Maa Durga Foods', phone: '98765 41003', location: 'Bihar Sharif', trust: 'Normal', notes: '' },
+    { id: 'p4', name: 'Bihar Agro', phone: '98765 41004', location: 'Ara', trust: 'Normal', notes: '' },
+    { id: 'p5', name: 'Shakti Rice Works', phone: '98765 41005', location: 'Patna', trust: 'Watch', notes: 'Follow up on outstanding' },
+    { id: 'p6', name: 'Sonal Enterprises', phone: '98765 41006', location: 'Sasaram', trust: 'Normal', notes: '' },
+  ],
+  dealTrips: [
+    { id: 'trip1', dealId: 'd17', transporterId: 't1', truckNumber: 'BR 01 GK 4821', freight: 85000, assignedDate: today, notes: '' },
+    { id: 'trip2', dealId: 'd18', transporterId: 't2', truckNumber: 'BR 21 GA 7612', freight: 62000, assignedDate: today, notes: '' },
   ],
   deals: [
     { id: 'd17', dealDate: today, dailySerial: 1, monthlySerial: 17, buyerId: 'p1', sellerId: 'p2', commodity: 'Paddy', quantity: 420, rate: 2350, route: 'Buxar → Patna', stage: 'In Transit', truck: 'BR 01 GK 4821', expectedPayment: '2026-09-08' },
