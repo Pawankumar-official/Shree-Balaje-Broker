@@ -1,137 +1,84 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import './App.css'
+import { currency, dealValue, monthlyKey, partyName, stages, today } from './domain'
+import type { Deal, DealStage, LedgerType, Party, PartyRole } from './domain'
+import { resetLocalData, useAppData } from './storage'
 
-type DealStage = 'Matching' | 'Truck Assigned' | 'In Transit' | 'Delivered' | 'Payment Pending' | 'Closed'
-
-type Deal = {
-  id: string
-  dealDate: string
-  dailySerial: number
-  monthlySerial: number
-  buyer: string
-  seller: string
-  commodity: string
-  quantity: number
-  rate: number
-  route: string
-  stage: DealStage
-  truck?: string
-  due: number
-  expectedPayment: string
-}
-
-const stages: DealStage[] = ['Matching', 'Truck Assigned', 'In Transit', 'Delivered', 'Payment Pending', 'Closed']
-
-const initialDeals: Deal[] = [
-  { id: 'record-17', dealDate: '2026-09-06', dailySerial: 1, monthlySerial: 17, buyer: 'Patna Rice Mill', seller: 'Kisan Traders', commodity: 'Paddy', quantity: 420, rate: 2350, route: 'Buxar → Patna', stage: 'In Transit', truck: 'BR 01 GK 4821', due: 0, expectedPayment: '08 Sep 2026' },
-  { id: 'record-18', dealDate: '2026-09-06', dailySerial: 2, monthlySerial: 18, buyer: 'Maa Durga Foods', seller: 'Bihar Agro', commodity: 'Wheat', quantity: 280, rate: 2680, route: 'Ara → Bihar Sharif', stage: 'Truck Assigned', truck: 'BR 21 GA 7612', due: 0, expectedPayment: '09 Sep 2026' },
-  { id: 'record-19', dealDate: '2026-09-06', dailySerial: 3, monthlySerial: 19, buyer: 'Shakti Rice Works', seller: 'Sonal Enterprises', commodity: 'Paddy', quantity: 610, rate: 2325, route: 'Sasaram → Patna', stage: 'Payment Pending', due: 425000, expectedPayment: '04 Sep 2026' },
-  { id: 'record-20', dealDate: '2026-09-06', dailySerial: 4, monthlySerial: 20, buyer: 'Ganga Foods', seller: 'Raj Grain House', commodity: 'Rice', quantity: 160, rate: 3520, route: 'Begusarai → Patna', stage: 'Matching', due: 0, expectedPayment: '12 Sep 2026' },
-]
-
-const money = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })
+type Page = 'Dashboard' | 'Deals' | 'Parties' | 'Offers & Requirements' | 'Transport' | 'Payments' | 'Daily Register' | 'Monthly Ledger' | 'To-Do' | 'Reports'
+const nav: { page: Page; icon: string }[] = [{ page: 'Dashboard', icon: '⌂' }, { page: 'Deals', icon: '◇' }, { page: 'Parties', icon: '♙' }, { page: 'Offers & Requirements', icon: '↔' }, { page: 'Transport', icon: '▰' }, { page: 'Payments', icon: '₹' }, { page: 'Daily Register', icon: '▤' }, { page: 'Monthly Ledger', icon: '▥' }, { page: 'To-Do', icon: '✓' }, { page: 'Reports', icon: '↗' }]
+const uid = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`
 
 function App() {
-  const [deals, setDeals] = useState<Deal[]>(initialDeals)
-  const [isDealFormOpen, setDealFormOpen] = useState(false)
-  const [activeNav, setActiveNav] = useState('Dashboard')
-  const [toast, setToast] = useState('')
-
-  const summary = useMemo(() => ({
-    active: deals.filter((deal) => !['Closed', 'Payment Pending'].includes(deal.stage)).length,
-    transit: deals.filter((deal) => deal.stage === 'In Transit').length,
-    paymentPending: deals.filter((deal) => deal.stage === 'Payment Pending').length,
-    outstanding: deals.reduce((sum, deal) => sum + deal.due, 0),
-  }), [deals])
-
-  const updateStage = (id: string, stage: DealStage) => {
-    setDeals((current) => current.map((deal) => deal.id === id ? { ...deal, stage } : deal))
-    setToast('Deal status updated. Financial records were not changed.')
-  }
+  const [data, setData] = useAppData()
+  const [page, setPage] = useState<Page>('Dashboard')
+  const [modal, setModal] = useState<'deal' | 'party' | 'payment' | 'offer' | 'requirement' | null>(null)
+  const [notice, setNotice] = useState('')
+  const name = (id: string) => partyName(data.parties, id)
+  const getPaid = (dealId: string, ledger: LedgerType = 'Commodity') => data.payments.filter((payment) => payment.dealId === dealId && payment.ledger === ledger).reduce((sum, payment) => sum + payment.amount, 0)
+  const outstanding = (deal: Deal) => Math.max(0, dealValue(deal) - getPaid(deal.id))
+  const activeDeals = data.deals.filter((deal) => !['Closed', 'Cancelled'].includes(deal.stage))
+  const paymentPending = data.deals.filter((deal) => outstanding(deal) > 0 && deal.expectedPayment < today && deal.stage !== 'Cancelled')
 
   const createDeal = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
-    const dealDate = '2026-09-06'
-    const sameDayDeals = deals.filter((deal) => deal.dealDate === dealDate)
-    const sameMonthDeals = deals.filter((deal) => deal.dealDate.slice(0, 7) === dealDate.slice(0, 7))
-    const newDeal: Deal = {
-      id: `record-${Date.now()}`,
-      dealDate,
-      dailySerial: Math.max(0, ...sameDayDeals.map((deal) => deal.dailySerial)) + 1,
-      monthlySerial: Math.max(0, ...sameMonthDeals.map((deal) => deal.monthlySerial)) + 1,
-      buyer: String(form.get('buyer')),
-      seller: String(form.get('seller')),
-      commodity: String(form.get('commodity')),
-      quantity: Number(form.get('quantity')),
-      rate: Number(form.get('rate')),
-      route: String(form.get('route')),
-      stage: 'Matching',
-      due: 0,
-      expectedPayment: String(form.get('expectedPayment')) || 'Not set',
-    }
-    setDeals((current) => [...current, newDeal])
-    setDealFormOpen(false)
-    setToast(`Daily no. ${newDeal.dailySerial} / monthly no. ${newDeal.monthlySerial} created in Matching.`)
+    const date = String(form.get('dealDate'))
+    const daily = data.deals.filter((deal) => deal.dealDate === date)
+    const monthly = data.deals.filter((deal) => monthlyKey(deal.dealDate) === monthlyKey(date))
+    const deal: Deal = { id: uid('deal'), dealDate: date, dailySerial: Math.max(0, ...daily.map((item) => item.dailySerial)) + 1, monthlySerial: Math.max(0, ...monthly.map((item) => item.monthlySerial)) + 1, buyerId: String(form.get('buyer')), sellerId: String(form.get('seller')), commodity: String(form.get('commodity')), quantity: Number(form.get('quantity')), rate: Number(form.get('rate')), route: String(form.get('route')), stage: 'Matching', truck: '', expectedPayment: String(form.get('expectedPayment')) }
+    setData({ ...data, deals: [...data.deals, deal] })
+    setModal(null); setNotice(`Deal added as daily no. ${deal.dailySerial} and monthly no. ${deal.monthlySerial}.`)
+  }
+  const createParty = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault(); const form = new FormData(event.currentTarget)
+    const party: Party = { id: uid('party'), name: String(form.get('name')), role: String(form.get('role')) as PartyRole, phone: String(form.get('phone')), location: String(form.get('location')), trust: 'Normal', notes: String(form.get('notes')) }
+    setData({ ...data, parties: [...data.parties, party] }); setModal(null); setNotice(`${party.name} added to Parties.`)
+  }
+  const createPayment = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault(); const form = new FormData(event.currentTarget)
+    setData({ ...data, payments: [...data.payments, { id: uid('payment'), dealId: String(form.get('deal')), ledger: String(form.get('ledger')) as LedgerType, amount: Number(form.get('amount')), date: String(form.get('date')), note: String(form.get('note')) }] }); setModal(null); setNotice('Payment entry saved. Outstanding balances were recalculated.')
+  }
+  const createMarketRecord = (event: FormEvent<HTMLFormElement>, kind: 'offer' | 'requirement') => {
+    event.preventDefault(); const form = new FormData(event.currentTarget)
+    if (kind === 'offer') setData({ ...data, offers: [...data.offers, { id: uid('offer'), sellerId: String(form.get('party')), commodity: String(form.get('commodity')), quantity: Number(form.get('quantity')), rate: Number(form.get('rate')), location: String(form.get('location')), status: 'Open' }] })
+    else setData({ ...data, requirements: [...data.requirements, { id: uid('requirement'), buyerId: String(form.get('party')), commodity: String(form.get('commodity')), quantity: Number(form.get('quantity')), targetRate: Number(form.get('rate')), deliveryLocation: String(form.get('location')), status: 'Open' }] })
+    setModal(null); setNotice(`${kind === 'offer' ? 'Offer' : 'Requirement'} recorded. A deal is never created automatically.`)
+  }
+  const updateStage = (id: string, stage: DealStage) => setData({ ...data, deals: data.deals.map((deal) => deal.id === id ? { ...deal, stage } : deal) })
+  const cancelDeal = (id: string) => { const reason = window.prompt('Cancellation reason (required):'); if (!reason?.trim()) return; setData({ ...data, deals: data.deals.map((deal) => deal.id === id ? { ...deal, stage: 'Cancelled', cancelledReason: reason } : deal) }); setNotice('Deal cancelled but retained in history. Payments remain unchanged.') }
+  const exportCsv = () => {
+    const header = ['Date', 'Daily No.', 'Monthly No.', 'Buyer', 'Seller', 'Commodity', 'Qtl', 'Rate', 'Route', 'Stage', 'Outstanding']
+    const rows = data.deals.map((deal) => [deal.dealDate, deal.dailySerial, deal.monthlySerial, name(deal.buyerId), name(deal.sellerId), deal.commodity, deal.quantity, deal.rate, deal.route, deal.stage, outstanding(deal)])
+    const csv = [header, ...rows].map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\n')
+    const link = document.createElement('a'); link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); link.download = 'shree-balaje-daily-register.csv'; link.click(); URL.revokeObjectURL(link.href); setNotice('Excel-compatible CSV export downloaded.')
   }
 
-  const attentionDeals = deals.filter((deal) => deal.stage === 'Matching' || deal.stage === 'Payment Pending')
+  const content = useMemo(() => {
+    const dealTable = (items: Deal[], monthly = false) => <div className="table-wrap"><table><thead><tr><th>{monthly ? 'Monthly No.' : 'Daily No.'}</th><th>Date</th><th>Buyer / Seller</th><th>Commodity</th><th>Value</th><th>Status</th><th>Outstanding</th><th></th></tr></thead><tbody>{items.map((deal) => <tr key={deal.id}><td><strong>{monthly ? deal.monthlySerial : deal.dailySerial}</strong><small>{monthly ? `Daily no. ${deal.dailySerial}` : `Monthly no. ${deal.monthlySerial}`}</small></td><td>{deal.dealDate}</td><td><strong>{name(deal.buyerId)}</strong><small>{name(deal.sellerId)}</small></td><td>{deal.commodity}<small>{deal.quantity} Qtl × {currency.format(deal.rate)}</small></td><td>{currency.format(dealValue(deal))}</td><td><span className={`status status-${deal.stage.toLowerCase().replace(' ', '-')}`}>{deal.stage}</span></td><td>{deal.stage === 'Cancelled' ? 'Excluded' : currency.format(outstanding(deal))}</td><td><select value={deal.stage} onChange={(event) => updateStage(deal.id, event.target.value as DealStage)} aria-label={`Change status of daily deal ${deal.dailySerial}`}>{stages.map((stage) => <option key={stage}>{stage}</option>)}<option>Cancelled</option></select>{deal.stage !== 'Cancelled' && <button className="danger-link" onClick={() => cancelDeal(deal.id)}>Cancel</button>}</td></tr>)}</tbody></table></div>
+    if (page === 'Deals') return <Section title="Deals" subtitle="Every deal remains visible, including cancelled deals." action="+ New Deal" onAction={() => setModal('deal')}>{dealTable(data.deals)}</Section>
+    if (page === 'Parties') return <Section title="Parties" subtitle="One profile can act as buyer, seller, or both." action="+ Add Party" onAction={() => setModal('party')}><div className="table-wrap"><table><thead><tr><th>Party</th><th>Role</th><th>Phone</th><th>Location</th><th>Trust</th><th>History</th></tr></thead><tbody>{data.parties.map((party) => <tr key={party.id}><td><strong>{party.name}</strong><small>{party.notes || 'No notes'}</small></td><td>{party.role}</td><td>{party.phone || '—'}</td><td>{party.location || '—'}</td><td><span className={`trust ${party.trust.toLowerCase()}`}>{party.trust}</span></td><td>{data.deals.filter((deal) => deal.buyerId === party.id || deal.sellerId === party.id).length} deals</td></tr>)}</tbody></table></div></Section>
+    if (page === 'Offers & Requirements') return <Section title="Offers & Requirements" subtitle="Potential matches are suggestions only; the broker explicitly creates every deal."><div className="split-actions"><button className="primary-button" onClick={() => setModal('offer')}>+ Seller Offer</button><button className="secondary-button" onClick={() => setModal('requirement')}>+ Buyer Requirement</button></div><div className="two-table"><div><h3>Open Offers</h3>{data.offers.map((offer) => <article className="record-card" key={offer.id}><strong>{offer.commodity} · {offer.quantity} Qtl</strong><p>{name(offer.sellerId)} · {offer.location}</p><span>{currency.format(offer.rate)}/Qtl</span></article>)}</div><div><h3>Open Requirements</h3>{data.requirements.map((requirement) => <article className="record-card" key={requirement.id}><strong>{requirement.commodity} · {requirement.quantity} Qtl</strong><p>{name(requirement.buyerId)} · {requirement.deliveryLocation}</p><span>Target {currency.format(requirement.targetRate)}/Qtl</span></article>)}</div></div><div className="match-note">Possible match: Paddy offer from Kisan Traders and requirement from Maa Durga Foods. <button className="text-button" onClick={() => setModal('deal')}>Create deal manually →</button></div></Section>
+    if (page === 'Transport') return <Section title="Transport" subtitle="Transporters, trucks, routes and freight memory. Driver name is intentionally not stored."><div className="two-table"><div><h3>Transporters</h3>{data.transporters.map((item) => <article className="record-card" key={item.id}><strong>{item.name}</strong><p>{item.routes}</p><span>{item.phone} · {item.reliability} reliability</span></article>)}</div><div><h3>Trucks</h3>{data.trucks.map((item) => <article className="record-card" key={item.id}><strong>{item.number}</strong><p>{name(item.transporterId)} · {item.capacity}</p><span>Driver phone: {item.driverPhone || 'Not entered'}</span></article>)}</div></div><div className="empty-callout">Next transport slice: add multiple dispatch/trip records to one deal and retain freight history by transporter + route.</div></Section>
+    if (page === 'Payments') return <Section title="Payments & Commissions" subtitle="Commodity settlement and buyer/seller broker commissions are separate ledgers." action="+ Add Payment" onAction={() => setModal('payment')}><div className="ledger-cards"><Metric title="Commodity outstanding" value={currency.format(data.deals.filter((deal) => deal.stage !== 'Cancelled').reduce((sum, deal) => sum + outstanding(deal), 0))} /><Metric title="Buyer commission" value={currency.format(data.payments.filter((item) => item.ledger === 'Buyer Commission').reduce((sum, item) => sum + item.amount, 0))} /><Metric title="Seller commission" value={currency.format(data.payments.filter((item) => item.ledger === 'Seller Commission').reduce((sum, item) => sum + item.amount, 0))} /></div><div className="table-wrap"><table><thead><tr><th>Date</th><th>Daily no.</th><th>Ledger</th><th>Amount</th><th>Note</th></tr></thead><tbody>{data.payments.map((item) => { const deal = data.deals.find((entry) => entry.id === item.dealId); return <tr key={item.id}><td>{item.date}</td><td>{deal?.dailySerial ?? '—'}</td><td>{item.ledger}</td><td>{currency.format(item.amount)}</td><td>{item.note || '—'}</td></tr> })}</tbody></table></div></Section>
+    if (page === 'Daily Register') return <Section title="Daily Register" subtitle="Source of truth for date-wise business records." action="Export Excel" onAction={exportCsv}>{dealTable(data.deals.filter((deal) => deal.dealDate === today))}</Section>
+    if (page === 'Monthly Ledger') return <Section title="September 2026 Monthly Ledger" subtitle="Monthly serials continue through the month; cancelled records remain listed but are excluded from totals." action="Print / Save PDF" onAction={() => window.print()}>{dealTable(data.deals, true)}<div className="ledger-total">Included business value: {currency.format(data.deals.filter((deal) => deal.stage !== 'Cancelled').reduce((sum, deal) => sum + dealValue(deal), 0))}</div></Section>
+    if (page === 'To-Do') return <Section title="To-Do" subtitle="Simple business follow-ups, not a project-management system."><div className="todo-list">{data.todos.map((todo) => <label key={todo.id}><input type="checkbox" checked={todo.done} onChange={() => setData({ ...data, todos: data.todos.map((item) => item.id === todo.id ? { ...item, done: !item.done } : item) })}/><span>{todo.text}</span><small>{todo.due}</small></label>)}</div><button className="secondary-button" onClick={() => { const text = window.prompt('New follow-up'); if (text?.trim()) setData({ ...data, todos: [...data.todos, { id: uid('todo'), text, done: false, due: today }] }) }}>+ Add follow-up</button></Section>
+    if (page === 'Reports') return <Section title="Reports & Exports" subtitle="Practical business records for review, filing and sharing."><div className="report-grid"><Report title="Daily Register" text="Date-wise operational records" action="Export Excel" onClick={exportCsv}/><Report title="Monthly Ledger" text="Excel-like monthly accounting view" action="Print / Save PDF" onClick={() => window.print()}/><Report title="Outstanding Payments" text={`${paymentPending.length} overdue records need attention`} action="Open Payments" onClick={() => setPage('Payments')}/><Report title="Party History" text="Deals, payment behaviour and notes" action="Open Parties" onClick={() => setPage('Parties')}/></div></Section>
+    return <Dashboard data={data} activeDeals={activeDeals} paymentPending={paymentPending} name={name} outstanding={outstanding} setPage={setPage} setModal={setModal} />
+  }, [data, page, paymentPending.length])
 
-  return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <div className="brand"><span className="brand-mark">SB</span><span>Shree Balaje<small>Brokerage</small></span></div>
-        <nav aria-label="Main navigation">
-          {['Dashboard', 'Deals', 'Parties', 'Transport', 'Payments', 'Daily Register', 'Monthly Ledger', 'To-Do', 'Reports'].map((item) => (
-            <button key={item} className={activeNav === item ? 'nav-item active' : 'nav-item'} onClick={() => setActiveNav(item)}>
-              <span>{item === 'Dashboard' ? '⌂' : item === 'Deals' ? '◇' : item === 'Parties' ? '♙' : item === 'Transport' ? '▰' : item === 'Payments' ? '₹' : item === 'Daily Register' ? '▤' : item === 'Monthly Ledger' ? '▥' : item === 'To-Do' ? '✓' : '↗'}</span>{item}
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-footer"><span className="online-dot"/> Business data is local demo data</div>
-      </aside>
-
-      <main>
-        <header className="topbar">
-          <div><p className="eyebrow">Saturday, 06 September 2026</p><h1>{activeNav === 'Dashboard' ? "Today's Business" : activeNav}</h1></div>
-          <div className="header-actions"><button className="icon-button" aria-label="Notifications">♧<span className="notification-dot"/></button><button className="profile">PB <span>⌄</span></button><button className="primary-button" onClick={() => setDealFormOpen(true)}>+ New Deal</button></div>
-        </header>
-
-        {toast && <div className="toast" role="status">{toast}<button onClick={() => setToast('')} aria-label="Dismiss message">×</button></div>}
-
-        <section className="summary-grid" aria-label="Business summary">
-          <article className="summary-card"><span className="card-icon gold">◇</span><div><p>Active Deals</p><strong>{summary.active}</strong><small>Across all active stages</small></div></article>
-          <article className="summary-card"><span className="card-icon blue">▰</span><div><p>In Transit</p><strong>{summary.transit}</strong><small>Truck currently moving</small></div></article>
-          <article className="summary-card"><span className="card-icon orange">₹</span><div><p>Payment Pending</p><strong>{summary.paymentPending}</strong><small>{money.format(summary.outstanding)} outstanding</small></div></article>
-          <article className="summary-card"><span className="card-icon red">!</span><div><p>Attention Required</p><strong>{attentionDeals.length}</strong><small>Needs your decision</small></div></article>
-        </section>
-
-        <section className="content-grid">
-          <div className="panel active-deals">
-            <div className="panel-heading"><div><p className="eyebrow">WORKING NOW</p><h2>Active Deals</h2></div><button className="text-button" onClick={() => setActiveNav('Deals')}>View all →</button></div>
-            <div className="table-wrap"><table><thead><tr><th>Daily No.</th><th>Buyer / Seller</th><th>Commodity</th><th>Route</th><th>Status</th><th></th></tr></thead><tbody>
-              {deals.slice(0, 5).map((deal) => <tr key={deal.id}><td><strong>{deal.dailySerial}</strong><small>Monthly no. {deal.monthlySerial} · {deal.quantity} Qtl</small></td><td><strong>{deal.buyer}</strong><small>{deal.seller}</small></td><td>{deal.commodity}<small>{money.format(deal.rate)}/Qtl</small></td><td>{deal.route}</td><td><span className={`status status-${deal.stage.toLowerCase().replace(' ', '-')}`}>{deal.stage}</span></td><td><select value={deal.stage} aria-label={`Update stage for daily deal number ${deal.dailySerial}`} onChange={(event) => updateStage(deal.id, event.target.value as DealStage)}>{stages.map((stage) => <option key={stage}>{stage}</option>)}</select></td></tr>)}
-            </tbody></table></div>
-          </div>
-
-          <aside className="side-panels">
-            <section className="panel attention"><div className="panel-heading"><div><p className="eyebrow">PRIORITY</p><h2>Attention Required</h2></div><span className="attention-count">{attentionDeals.length}</span></div>
-              {attentionDeals.slice(0, 3).map((deal) => <div className="attention-row" key={deal.id}><span className={deal.stage === 'Payment Pending' ? 'attention-icon overdue' : 'attention-icon'}>{deal.stage === 'Payment Pending' ? '₹' : '◇'}</span><div><strong>{deal.stage === 'Payment Pending' ? 'Payment follow-up' : 'Complete deal details'}</strong><p>Daily no. {deal.dailySerial} · {deal.buyer}</p></div><button onClick={() => setToast(`Daily deal no. ${deal.dailySerial} is the next workflow step.`)}>→</button></div>)}
-            </section>
-            <section className="panel transport-card"><div><p className="eyebrow">TRANSPORT</p><h2>Truck activity</h2></div><div className="transport-stats"><span><strong>{deals.filter((deal) => deal.stage === 'Matching').length}</strong> Awaiting</span><span><strong>{deals.filter((deal) => deal.stage === 'Truck Assigned').length}</strong> Assigned</span><span><strong>{summary.transit}</strong> In transit</span></div><button className="secondary-button" onClick={() => setActiveNav('Transport')}>Manage transport</button></section>
-          </aside>
-        </section>
-
-        <section className="bottom-grid">
-          <div className="panel register"><div className="panel-heading"><div><p className="eyebrow">SOURCE OF TRUTH</p><h2>Today’s Daily Register</h2></div><button className="text-button" onClick={() => setActiveNav('Daily Register')}>Open register →</button></div><div className="register-row"><span>06 Sep</span><strong>Daily serials 1–{deals.length}</strong><p>Monthly serials continue from 17 · {summary.paymentPending} payment pending</p></div></div>
-          <div className="panel todo"><div className="panel-heading"><div><p className="eyebrow">FOLLOW-UPS</p><h2>To-Do</h2></div><button className="text-button">+ Add</button></div><label><input type="checkbox"/> Confirm unloading for daily no. 1</label><label><input type="checkbox"/> Follow up ₹4,25,000 from Shakti Rice Works</label></div>
-        </section>
-      </main>
-
-      {isDealFormOpen && <div className="modal-backdrop" role="presentation"><section className="deal-modal" role="dialog" aria-modal="true" aria-labelledby="new-deal-title"><div className="modal-heading"><div><p className="eyebrow">ONE-SCREEN QUICK ENTRY</p><h2 id="new-deal-title">Create New Deal</h2><p>Only enter what is known now. Missing transport and payment details can be added later.</p></div><button className="close-button" onClick={() => setDealFormOpen(false)} aria-label="Close">×</button></div><form onSubmit={createDeal}><div className="form-grid"><label>Buyer<input name="buyer" required placeholder="Select or type buyer" /></label><label>Seller<input name="seller" required placeholder="Select or type seller" /></label><label>Commodity<select name="commodity" defaultValue="Paddy"><option>Paddy</option><option>Wheat</option><option>Rice</option></select></label><label>Quantity (Qtl)<input name="quantity" type="number" min="0.01" step="0.01" required /></label><label>Rate (₹/Qtl)<input name="rate" type="number" min="0" required /></label><label>Route<input name="route" required placeholder="e.g. Buxar → Patna" /></label><label>Expected payment date<input name="expectedPayment" type="date" /></label></div><div className="form-note">This creates a deal in <strong>Matching</strong>. No offer, payment, or truck is created automatically.</div><div className="form-actions"><button type="button" className="secondary-button" onClick={() => setDealFormOpen(false)}>Cancel</button><button className="primary-button" type="submit">Create Deal</button></div></form></section></div>}
-    </div>
-  )
+  return <div className="app-shell"><aside className="sidebar"><div className="brand"><span className="brand-mark">SB</span><span>Shree Balaje<small>Brokerage</small></span></div><nav>{nav.map((item) => <button key={item.page} className={page === item.page ? 'nav-item active' : 'nav-item'} onClick={() => setPage(item.page)}><span>{item.icon}</span>{item.page}</button>)}</nav><div className="sidebar-footer"><span className="online-dot"/> Local-first workspace<br/><small>Saved in this browser</small></div></aside><main><header className="topbar"><div><p className="eyebrow">Saturday, 06 September 2026</p><h1>{page === 'Dashboard' ? "Today's Business" : page}</h1></div><div className="header-actions"><button className="secondary-button" onClick={() => { if (window.confirm('Reset all local demo records?')) { resetLocalData(); window.location.reload() } }}>Reset demo</button><button className="primary-button" onClick={() => setModal('deal')}>+ New Deal</button></div></header>{notice && <div className="toast">{notice}<button onClick={() => setNotice('')}>×</button></div>}{content}</main>{modal && <Modal title={modal === 'deal' ? 'Create New Deal' : modal === 'party' ? 'Add Party' : modal === 'payment' ? 'Add Payment Entry' : modal === 'offer' ? 'Record Seller Offer' : 'Record Buyer Requirement'} onClose={() => setModal(null)}>{modal === 'deal' && <DealForm parties={data.parties} onSubmit={createDeal}/>} {modal === 'party' && <PartyForm onSubmit={createParty}/>} {modal === 'payment' && <PaymentForm deals={data.deals} onSubmit={createPayment}/>} {(modal === 'offer' || modal === 'requirement') && <MarketForm kind={modal} parties={data.parties} onSubmit={(event) => createMarketRecord(event, modal)}/>}</Modal>}</div>
 }
+
+function Dashboard({ data, activeDeals, paymentPending, name, outstanding, setPage, setModal }: { data: ReturnType<typeof useAppData>[0]; activeDeals: Deal[]; paymentPending: Deal[]; name: (id: string) => string; outstanding: (deal: Deal) => number; setPage: (page: Page) => void; setModal: (modal: 'deal') => void }) { return <><section className="summary-grid"><Metric title="Active Deals" value={String(activeDeals.length)} text="Across all active stages"/><Metric title="In Transit" value={String(data.deals.filter((deal) => deal.stage === 'In Transit').length)} text="Truck currently moving"/><Metric title="Overdue Payments" value={String(paymentPending.length)} text={currency.format(paymentPending.reduce((sum, deal) => sum + outstanding(deal), 0)) + ' outstanding'}/><Metric title="Today’s Deals" value={String(data.deals.filter((deal) => deal.dealDate === today).length)} text="Daily serial resets tomorrow"/></section><section className="content-grid"><div className="panel"><div className="panel-heading"><div><p className="eyebrow">WORKING NOW</p><h2>Active Deals</h2></div><button className="text-button" onClick={() => setPage('Deals')}>View all →</button></div><div className="deal-list">{activeDeals.slice(0, 5).map((deal) => <div className="deal-row" key={deal.id}><span className="serial">{deal.dailySerial}<small>M{deal.monthlySerial}</small></span><div><strong>{name(deal.buyerId)}</strong><p>{name(deal.sellerId)} · {deal.commodity} · {deal.quantity} Qtl</p></div><span className={`status status-${deal.stage.toLowerCase().replace(' ', '-')}`}>{deal.stage}</span></div>)}</div></div><div className="panel quick-panel"><p className="eyebrow">QUICK ENTRY</p><h2>Capture business once</h2><p>Create an incomplete deal now; add truck, payment and settlement details as they become known.</p><button className="primary-button" onClick={() => setModal('deal')}>+ New Deal</button></div></section><section className="bottom-grid"><div className="panel"><div className="panel-heading"><div><p className="eyebrow">ATTENTION REQUIRED</p><h2>Payment Follow-ups</h2></div><button className="text-button" onClick={() => setPage('Payments')}>Open →</button></div>{paymentPending.length ? paymentPending.map((deal) => <div className="attention-row" key={deal.id}><span className="attention-icon overdue">₹</span><div><strong>Daily no. {deal.dailySerial} · {name(deal.buyerId)}</strong><p>{currency.format(outstanding(deal))} overdue since {deal.expectedPayment}</p></div></div>) : <div className="empty-callout">No overdue commodity payments.</div>}</div><div className="panel"><div className="panel-heading"><div><p className="eyebrow">SOURCE OF TRUTH</p><h2>Daily Register</h2></div><button className="text-button" onClick={() => setPage('Daily Register')}>Open →</button></div><div className="register-row"><span>06 Sep</span><strong>Daily serials 1–{data.deals.filter((deal) => deal.dealDate === today).length}</strong><p>Monthly sequence continues from 17</p></div></div></section></> }
+function Section({ title, subtitle, action, onAction, children }: { title: string; subtitle: string; action?: string; onAction?: () => void; children: React.ReactNode }) { return <section className="panel page-panel"><div className="panel-heading"><div><p className="eyebrow">BUSINESS WORKSPACE</p><h2>{title}</h2><p className="section-subtitle">{subtitle}</p></div>{action && <button className="primary-button" onClick={onAction}>{action}</button>}</div>{children}</section> }
+function Metric({ title, value, text }: { title: string; value: string; text?: string }) { return <article className="summary-card"><span className="card-icon gold">◇</span><div><p>{title}</p><strong>{value}</strong>{text && <small>{text}</small>}</div></article> }
+function Report({ title, text, action, onClick }: { title: string; text: string; action: string; onClick: () => void }) { return <article className="report-card"><h3>{title}</h3><p>{text}</p><button className="secondary-button" onClick={onClick}>{action}</button></article> }
+function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) { return <div className="modal-backdrop"><section className="deal-modal" role="dialog" aria-modal="true"><div className="modal-heading"><div><p className="eyebrow">QUICK ENTRY</p><h2>{title}</h2></div><button className="close-button" onClick={onClose}>×</button></div>{children}</section></div> }
+function DealForm({ parties, onSubmit }: { parties: Party[]; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) { const buyers = parties.filter((party) => party.role !== 'Seller'); const sellers = parties.filter((party) => party.role !== 'Buyer'); return <form onSubmit={onSubmit}><div className="form-grid"><label>Deal date<input name="dealDate" type="date" defaultValue={today} required/></label><label>Buyer<select name="buyer" required>{buyers.map((party) => <option value={party.id} key={party.id}>{party.name}</option>)}</select></label><label>Seller<select name="seller" required>{sellers.map((party) => <option value={party.id} key={party.id}>{party.name}</option>)}</select></label><label>Commodity<select name="commodity"><option>Paddy</option><option>Wheat</option><option>Rice</option></select></label><label>Quantity (Qtl)<input name="quantity" type="number" step="0.01" min="0.01" required/></label><label>Rate (₹/Qtl)<input name="rate" type="number" min="0" required/></label><label>Route<input name="route" placeholder="e.g. Buxar → Patna" required/></label><label>Expected payment<input name="expectedPayment" type="date" required/></label></div><div className="form-note">The system assigns the next daily and monthly serial. This creates only a <strong>Matching</strong> deal—no transport or payment is added automatically.</div><div className="form-actions"><button className="primary-button">Create Deal</button></div></form> }
+function PartyForm({ onSubmit }: { onSubmit: (event: FormEvent<HTMLFormElement>) => void }) { return <form onSubmit={onSubmit}><div className="form-grid"><label>Party name<input name="name" required/></label><label>Role<select name="role"><option>Buyer</option><option>Seller</option><option>Both</option></select></label><label>Phone<input name="phone"/></label><label>Location<input name="location"/></label><label className="span-two">Notes<textarea name="notes"/></label></div><div className="form-actions"><button className="primary-button">Save Party</button></div></form> }
+function PaymentForm({ deals, onSubmit }: { deals: Deal[]; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) { return <form onSubmit={onSubmit}><div className="form-grid"><label>Deal<select name="deal">{deals.map((deal) => <option value={deal.id} key={deal.id}>Daily no. {deal.dailySerial} / Monthly no. {deal.monthlySerial}</option>)}</select></label><label>Ledger<select name="ledger"><option>Commodity</option><option>Buyer Commission</option><option>Seller Commission</option></select></label><label>Amount (₹)<input name="amount" type="number" min="1" required/></label><label>Date<input name="date" type="date" defaultValue={today} required/></label><label className="span-two">Note<textarea name="note"/></label></div><div className="form-note">Partial entries are unlimited. The outstanding figure is always calculated from the underlying payment records.</div><div className="form-actions"><button className="primary-button">Save Payment</button></div></form> }
+function MarketForm({ kind, parties, onSubmit }: { kind: 'offer' | 'requirement'; parties: Party[]; onSubmit: (event: FormEvent<HTMLFormElement>) => void }) { const list = parties.filter((party) => kind === 'offer' ? party.role !== 'Buyer' : party.role !== 'Seller'); return <form onSubmit={onSubmit}><div className="form-grid"><label>{kind === 'offer' ? 'Seller' : 'Buyer'}<select name="party">{list.map((party) => <option key={party.id} value={party.id}>{party.name}</option>)}</select></label><label>Commodity<select name="commodity"><option>Paddy</option><option>Wheat</option><option>Rice</option></select></label><label>Quantity (Qtl)<input name="quantity" type="number" min="1" required/></label><label>{kind === 'offer' ? 'Rate' : 'Target rate'} (₹/Qtl)<input name="rate" type="number" min="0" required/></label><label className="span-two">{kind === 'offer' ? 'Location' : 'Delivery location'}<input name="location" required/></label></div><div className="form-actions"><button className="primary-button">Save {kind === 'offer' ? 'Offer' : 'Requirement'}</button></div></form> }
 
 export default App
