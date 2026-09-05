@@ -34,6 +34,7 @@ In progress — Milestone 1 interface foundation.
 - Separate commodity, buyer commission, and seller commission ledgers with independent obligations, partial payments and calculated outstanding balances.
 - Transporter and Truck entry, with driver-phone-only records and derived transporter + route freight history.
 - Daily Register CSV export, print-ready Monthly Ledger totals, and simple To-Do entry.
+- Controlled Deal editing and a Reports / Exports workspace for Deal, payment, freight and accounting records.
 
 ### Changed
 
