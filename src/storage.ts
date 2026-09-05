@@ -8,7 +8,7 @@ function loadData(): AppData {
   try {
     const saved = window.localStorage.getItem(storageKey)
     const parsed = saved ? JSON.parse(saved) as Partial<AppData> : demoData
-    return { ...demoData, ...parsed, dealTrips: parsed.dealTrips ?? [] }
+    return { ...demoData, ...parsed, dealTrips: parsed.dealTrips ?? [], obligations: parsed.obligations ?? [] }
   } catch {
     return demoData
   }

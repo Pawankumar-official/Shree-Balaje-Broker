@@ -6,7 +6,7 @@
 
 ## 1. Workflow to implement next
 
-1. Create or select a Party. A Party may be a buyer, seller, or both.
+1. Create or select a Party. Party profiles are role-neutral; buyer and seller are selected on each Deal.
 2. Create a Deal in `Matching`. Buyer, seller, commodity, quantity, rate, deal date and route are required. Transport and payment details are optional.
 3. Add zero or more transport trips to the Deal. A trip records transporter, truck, route, freight, optional driver phone, and the relevant operational timestamps. A driver name is never stored.
 4. The broker explicitly changes the Deal stage. The app may flag missing details, but must not change a stage automatically.
@@ -20,7 +20,7 @@
 
 `id`, `name`, `roles`, `contactPerson`, `phone`, `alternatePhone`, `address`, `location`, `notes`, `trustLevel`, `riskFlags`, `createdAt`, `updatedAt`.
 
-`roles` must allow both buyer and seller roles. Historical payment behaviour and deal history are derived, not manually duplicated.
+Buyer and seller are Deal relationships, not Party Profile fields. Historical payment behaviour and deal history are derived, not manually duplicated.
 
 ### Deal
 

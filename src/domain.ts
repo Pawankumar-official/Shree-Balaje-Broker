@@ -5,13 +5,14 @@ export type Party = { id: string; name: string; phone: string; location: string;
 export type Deal = { id: string; dealDate: string; dailySerial: number; monthlySerial: number; buyerId: string; sellerId: string; commodity: string; quantity: number; rate: number; route: string; stage: DealStage; truck: string; expectedPayment: string; cancelledReason?: string }
 export type DealTrip = { id: string; dealId: string; transporterId: string; truckNumber: string; freight: number; assignedDate: string; notes: string }
 export type Payment = { id: string; dealId: string; ledger: LedgerType; amount: number; date: string; note: string }
+export type PaymentObligation = { id: string; dealId: string; ledger: LedgerType; amount: number; expectedPayment: string }
 export type Transporter = { id: string; name: string; phone: string; routes: string; reliability: 'High' | 'Normal' | 'Watch' }
 export type Truck = { id: string; number: string; transporterId: string; capacity: string; driverPhone: string }
 export type Offer = { id: string; sellerId: string; commodity: string; quantity: number; rate: number; location: string; status: 'Open' | 'Converted' | 'Closed' }
 export type Requirement = { id: string; buyerId: string; commodity: string; quantity: number; targetRate: number; deliveryLocation: string; status: 'Open' | 'Converted' | 'Closed' }
 export type Todo = { id: string; text: string; done: boolean; due: string }
 
-export type AppData = { parties: Party[]; deals: Deal[]; dealTrips: DealTrip[]; payments: Payment[]; transporters: Transporter[]; trucks: Truck[]; offers: Offer[]; requirements: Requirement[]; todos: Todo[] }
+export type AppData = { parties: Party[]; deals: Deal[]; dealTrips: DealTrip[]; payments: Payment[]; obligations: PaymentObligation[]; transporters: Transporter[]; trucks: Truck[]; offers: Offer[]; requirements: Requirement[]; todos: Todo[] }
 
 export const today = '2026-09-06'
 export const stages: DealStage[] = ['Matching', 'Truck Assigned', 'In Transit', 'Delivered', 'Payment Pending', 'Closed']
@@ -37,6 +38,11 @@ export const demoData: AppData = {
     { id: 'd20', dealDate: today, dailySerial: 4, monthlySerial: 20, buyerId: 'p1', sellerId: 'p4', commodity: 'Rice', quantity: 160, rate: 3520, route: 'Begusarai → Patna', stage: 'Matching', truck: '', expectedPayment: '2026-09-12' },
   ],
   payments: [{ id: 'pay1', dealId: 'd19', ledger: 'Commodity', amount: 993250, date: '2026-09-02', note: 'Part payment received' }],
+  obligations: [
+    { id: 'ob1', dealId: 'd17', ledger: 'Buyer Commission', amount: 12600, expectedPayment: '2026-09-10' },
+    { id: 'ob2', dealId: 'd17', ledger: 'Seller Commission', amount: 8400, expectedPayment: '2026-09-10' },
+    { id: 'ob3', dealId: 'd19', ledger: 'Buyer Commission', amount: 18300, expectedPayment: '2026-09-04' },
+  ],
   transporters: [{ id: 't1', name: 'Ganga Roadlines', phone: '98765 42001', routes: 'Buxar–Patna, Ara–Patna', reliability: 'High' }, { id: 't2', name: 'Raj Transport', phone: '98765 42002', routes: 'Sasaram–Patna', reliability: 'Normal' }],
   trucks: [{ id: 'tr1', number: 'BR 01 GK 4821', transporterId: 't1', capacity: '420 Qtl', driverPhone: '98765 43001' }, { id: 'tr2', number: 'BR 21 GA 7612', transporterId: 't2', capacity: '300 Qtl', driverPhone: '' }],
   offers: [{ id: 'o1', sellerId: 'p2', commodity: 'Paddy', quantity: 500, rate: 2340, location: 'Buxar', status: 'Open' }],

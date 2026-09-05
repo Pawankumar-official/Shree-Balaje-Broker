@@ -31,6 +31,7 @@ In progress — Milestone 1 interface foundation.
 - Party business-history profiles and manual Offer / Requirement entry.
 - Deal workspace actions for transport trips and commodity payments.
 - Cancellation safeguards: a cancellation reason is required; historical trips and payments remain visible; cancelled Deals cannot receive new trips, payments, or stage changes.
+- Separate commodity, buyer commission, and seller commission ledgers with independent obligations, partial payments and calculated outstanding balances.
 
 ### Changed
 
