@@ -13,7 +13,7 @@ Use this only alongside the paper/WhatsApp workflow. It must not be the sole rec
 
 ## Required before production launch
 
-1. Create the Supabase project and apply the migration.
+1. Create the Supabase project and apply both migrations in filename order.
 2. Configure email/password authentication and provide project URL plus publishable key in `.env.local` and the deployment host.
 3. Replace the local-storage adapter with the authenticated Supabase repository and test synchronization from two devices.
 4. Allocate Deal serials server-side in a transaction; browser serial allocation is not cross-device safe.
