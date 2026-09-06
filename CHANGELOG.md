@@ -37,6 +37,7 @@ In progress — Milestone 1 interface foundation.
 - Controlled Deal editing and a Reports / Exports workspace for Deal, payment, freight and accounting records.
 - Offers and Requirements can be converted through a reviewed, prefilled Deal flow or marked Open, Converted, or Closed.
 - Payment due list with ledger, Deal, parties, due date and overdue indication; payment-entry corrections; clickable Deal-status progression; saved light/dark mode preference.
+- Supabase email authentication gate and authenticated cloud-record loading foundation.
 
 ### Changed
 

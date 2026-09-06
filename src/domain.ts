@@ -50,6 +50,8 @@ export const demoData: AppData = {
   todos: [{ id: 'todo1', text: 'Confirm unloading for daily no. 1', done: false, due: today }, { id: 'todo2', text: 'Follow up outstanding with Shakti Rice Works', done: false, due: today }],
 }
 
+export const emptyData: AppData = { parties: [], deals: [], dealTrips: [], payments: [], obligations: [], transporters: [], trucks: [], offers: [], requirements: [], todos: [] }
+
 export const partyName = (parties: Party[], id: string) => parties.find((party) => party.id === id)?.name ?? 'Unknown party'
 export const dealValue = (deal: Deal) => deal.quantity * deal.rate
 export const monthlyKey = (date: string) => date.slice(0, 7)
