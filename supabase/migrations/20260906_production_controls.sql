@@ -22,7 +22,7 @@ declare row_data jsonb := case when tg_op = 'DELETE' then to_jsonb(old) else to_
 declare prior_data jsonb := case when tg_op = 'INSERT' then null else to_jsonb(old) end;
 begin
   insert into public.audit_events (owner_id, actor_id, entity_type, entity_id, action, before_state, after_state)
-  values (row_data ->> 'owner_id', auth.uid(), tg_table_name, (row_data ->> 'id')::uuid, lower(tg_op), prior_data, case when tg_op = 'DELETE' then null else row_data end);
+  values ((row_data ->> 'owner_id')::uuid, auth.uid(), tg_table_name, (row_data ->> 'id')::uuid, lower(tg_op), prior_data, case when tg_op = 'DELETE' then null else row_data end);
   return coalesce(new, old);
 end; $$;
 create trigger audit_parties after insert or update or delete on public.parties for each row execute procedure public.audit_business_change();
