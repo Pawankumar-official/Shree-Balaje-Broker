@@ -2,6 +2,9 @@
 
 Real-world web application for a Bihar grain brokerage business. The product baseline is in [the workflow and data-model document](docs/business-workflow-data-model-v1.md).
 
+## link
+https://shree-balaje-broker.vercel.app/
+
 ## Current milestone
 
 The local interface supports the Milestone 1 workflow: Parties, quick Deal entry, explicit stage changes, cancellation history, partial payment entries, offers/requirements, transport reference data, To-Do items, Daily Register CSV export, and a printable monthly view.
