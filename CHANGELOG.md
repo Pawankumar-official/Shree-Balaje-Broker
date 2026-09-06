@@ -35,6 +35,8 @@ In progress — Milestone 1 interface foundation.
 - Transporter and Truck entry, with driver-phone-only records and derived transporter + route freight history.
 - Daily Register CSV export, print-ready Monthly Ledger totals, and simple To-Do entry.
 - Controlled Deal editing and a Reports / Exports workspace for Deal, payment, freight and accounting records.
+- Offers and Requirements can be converted through a reviewed, prefilled Deal flow or marked Open, Converted, or Closed.
+- Payment due list with ledger, Deal, parties, due date and overdue indication; payment-entry corrections; clickable Deal-status progression; saved light/dark mode preference.
 
 ### Changed
 
