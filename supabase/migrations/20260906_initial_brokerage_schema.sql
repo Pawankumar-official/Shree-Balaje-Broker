@@ -20,10 +20,8 @@ create table public.parties (
   name text not null check (length(trim(name)) > 0),
   contact_person text not null default '', phone text not null default '', alternate_phone text not null default '',
   address text not null default '', location text not null default '', notes text not null default '',
-  is_buyer boolean not null default false, is_seller boolean not null default false,
   trust public.trust_level not null default 'normal', risk_flags text[] not null default '{}',
-  created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
-  check (is_buyer or is_seller)
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
 
 create table public.transporters (

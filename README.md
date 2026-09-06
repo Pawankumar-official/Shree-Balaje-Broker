@@ -6,7 +6,9 @@ Real-world web application for a Bihar grain brokerage business. The product bas
 
 The local interface supports the Milestone 1 workflow: Parties, quick Deal entry, explicit stage changes, cancellation history, partial payment entries, offers/requirements, transport reference data, To-Do items, Daily Register CSV export, and a printable monthly view.
 
-The repository also includes a production PostgreSQL/Supabase migration with authentication-linked ownership and Row Level Security. Cloud synchronization is not activated until a Supabase project is configured.
+The repository also includes a production PostgreSQL/Supabase migration with authentication-linked ownership and Row Level Security. Cloud synchronization is not activated until a Supabase project is configured and the app repository is wired to it.
+
+Read [the production readiness gate](docs/production-readiness.md) before entering real business data.
 
 ## Run locally
 
