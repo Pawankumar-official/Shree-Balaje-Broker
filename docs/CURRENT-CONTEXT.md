@@ -34,21 +34,24 @@ Never push directly to `master`. No `gh`/`vercel` CLI installed on this machine;
 - Design language: gold (`#b58b36`) + charcoal (`#161511`) "premium brokerage" look, Georgia serif headings, light/dark + mobile responsive.
 
 ## Feature inventory (current master)
-Dashboard · Deals (workspace: stage, edit, commission, payment, cancel, trips) · Parties (profile + deal history) · Offers & Requirements (commodity match → prefilled Deal) · Transport (transporters, trucks, freight history) · Payments & Commissions (3 ledgers, due + overdue, recorded entries) · Daily Register (export CSV) · Monthly Ledger (print/PDF) · To-Do · Reports. Auth sign-in / sign-up with split-hero premium UI.
+Dashboard · Deals (workspace: stage, edit, commission, payment, cancel, trips) · Parties (profile + deal history) · Offers & Requirements (commodity match → prefilled Deal) · Transport (transporters, trucks, freight history) · Payments & Commissions (3 ledgers, due + overdue, recorded entries) · Daily Register (export CSV) · Monthly Ledger (year-month selector, print/PDF) · To-Do · Reports. Auth sign-in / sign-up with split-hero premium UI.
 
 ## Data model (Supabase tables)
-`profiles`, `parties` (+`trust` enum, `risk_flags`), `transporters` (+`routes`, `reliability`), `trucks` (+`driver_phone` since Phase 2, `capacity_qtl`), `deals` (server-side `create_deal` RPC allocates serials), `deal_trips`, `payment_obligations` (ledger: commodity / buyer_commission / seller_commission), `payment_entries` (append-only), `offers`, `requirements`, `todos`, `audit_events` (+ `audit_business_change` trigger — written but **no UI reads it yet**), `monthly_ledger_snapshots` (+ `finalize_monthly_ledger` RPC — created but **never called from UI**).
+`profiles`, `parties` (+`trust` enum, `risk_flags`), `transporters` (+`routes`, `reliability`), `trucks` (+`driver_phone` since Phase 2, `capacity_qtl`), `deals` (server-side `create_deal` RPC allocates serials), `deal_trips` (+`truck_number` free text, `driver_phone`; `truck_id` now nullable — trips no longer require a pre-registered truck), `payment_obligations` (ledger: commodity / buyer_commission / seller_commission), `payment_entries` (append-only), `offers`, `requirements`, `todos`, `audit_events` (+ `audit_business_change` trigger — written but **no UI reads it yet**), `monthly_ledger_snapshots` (+ `finalize_monthly_ledger` RPC — created but **never called from UI**).
 
 ## V2 Roadmap (improvement program — reserve the "progress" language for this)
 - ✅ **Done — Login page premium redesign** (split hero + responsive + show/hide password, loading state, autocomplete, status styling). Branch `feature/login-premium` → PR #2 → live.
-- 🔨 **In progress — Phase 2 Foundation**: this `feature/foundation` branch.
-  - ✅ `docs/CURRENT-CONTEXT.md` (this file)
-  - Sidebar footer reflects real cloud/local mode (`App.tsx`)
-  - A11y: Escape-to-close modals, `aria-label`s on icon-only buttons, visible focus states
-  - Empty-state consistency
-  - Party `trust` editable + Edit-Party flow
-  - Transport cloud fix: read transporter `routes` from `notes`; add `trucks.driver_phone` (migration) + wire save/read — **owner must apply the new migration**
-  - Fix Dashboard active/overdue inconsistency around Closed deals
+- ✅ **Done — Phase 2 Foundation** (branch `feature/foundation` → merged): this doc, cloud-mode sidebar label, Escape-to-close + aria-labels, empty-state consistency (partly), Edit-Party + trust, transport cloud fix (`trucks.driver_phone` migration — owner must apply it).
+- 🔨 **In progress — Phase 2b UX polish** (this `feature/ux-polish` branch): the 8 verified review findings.
+  - ✅ Locked Deal stage/actions for **Closed** deals (terminal, like Cancelled)
+  - ✅ Overdue now shows **Closed deals that still owe money** (excludes only Cancelled, checks all 3 ledgers)
+  - ✅ Deals search empty state (+ status chip guard, no wrap-around)
+  - ✅ Parties empty state
+  - ✅ Deal **rate required**; quantity/rate validated > 0 on create & edit
+  - ✅ Monthly Ledger **month selector** (filter by month, not just today)
+  - ✅ Modal **eyebrow is dynamic** per modal type (was hardcoded "DEAL WORKSPACE")
+  - ✅ TripForm truck dropdown **filtered by selected transporter**
+  - ✅ Cloud payments hide the "Edit payment →" dead-end button (append-only; reversal flow is Phase 4)
 - ⏳ **Phase 3 — Audit / Activity timeline** (use existing `audit_events` table): Activity page + per-deal/per-party history.
 - ⏳ **Phase 4 — Payments reversal/adjustment flow** (append-only corrections).
 - ⏳ **Phase 5 — Page-by-page UX polish** (Dashboard KPIs, Deal workspace, Offers match, Reports/Monthly finalization via existing RPC).
@@ -56,4 +59,5 @@ Dashboard · Deals (workspace: stage, edit, commission, payment, cancel, trips) 
 
 ## Change Log (append after each merged branch)
 - **2026-09-11 · feature/login-premium · PR #2** — Premium responsive split-hero sign-in: brand panel + form on desktop, single card on mobile; show/hide password, autocomplete, submit loading state, gold/red/green status messages, focus rings. Consolidated auth styles into `index.css`. **LIVE on production.**
-- **2026-09-11 · feature/foundation** — (in progress) handoff doc, cloud-mode sidebar label, Escape-to-close + aria-labels, empty-state consistency, Edit-Party + trust, transport cloud fix (+ `trucks.driver_phone` migration), active/overdue consistency.
+- **2026-09-11 · feature/foundation** — handoff doc, cloud-mode sidebar label, Escape-to-close + aria-labels, empty-state consistency, Edit-Party + trust, transport cloud fix (+ `trucks.driver_phone` migration), active/overdue consistency.
+- **2026-09-11 · feature/ux-polish** — Dashboard shows only Active Deals / To-Do / Overdue; Dashboard Active-Deals **Truck column now reads the deal's actual trips** (was a stale single `deal.truck` field that only got set on a first truck added to a Matching deal — so trucks on later/in-progress deals never showed); Deals page **status-contact** column (transporter + driver phone to call for truck status); removed "Known trucks" panel from Transport; **Deal workspace redesign** (hero summary, dues, stage control matching form fields, full-size Cancel button); **Add Truck is now manual** (type truck number + driver phone per load, no pre-registered truck needed) + **Edit Truck** to fix typos + **Delete Truck** (confirmation, cloud + local, hidden on Closed/Cancelled). Needs new migration `20260911_trip_free_text.sql` (adds `deal_trips.truck_number`, drops truck_id NOT NULL) applied in Supabase — **run the version that wraps the backfill UPDATE in `disable/enable trigger audit_trips`**: the SQL editor is unauthenticated so `auth.uid()` is NULL and the audit trigger aborts with 23502. **Awaiting owner merge → PR preview.**
