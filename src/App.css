@@ -98,3 +98,5 @@ textarea { min-height:72px; resize:vertical; padding:10px; border:1px solid #d9d
 .dark .profile-table th { color:#9a8e72; border-top-color:#332f26; }
 .dark .profile-table td { color:#e6dfcf; border-top-color:#332f26; }
 .dark .profile-table tr:last-child th, .dark .profile-table tr:last-child td { border-bottom-color:#332f26; }
+.overdue-tag { display:inline-block; margin-left:6px; padding:1px 6px; font-size:10px; font-weight:700; color:#b3261e; background:#fbe7e3; border:1px solid #efc3ba; border-radius:4px; text-transform:uppercase; letter-spacing:.04em; }
+.dark .overdue-tag { color:#ffb4a8; background:#3a1c16; border-color:#6b2f25; }
