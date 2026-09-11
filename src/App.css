@@ -87,3 +87,14 @@ textarea { min-height:72px; resize:vertical; padding:10px; border:1px solid #d9d
   .nav-item { font-size:11px; padding:8px 9px; }
   .nav-item span { font-size:13px; }
 }
+.profile-header { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:18px; }
+.profile-header h3 { font-family:Georgia, serif; font-size:26px; line-height:1.15; color:#161511; margin:4px 0 0; }
+.profile-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.profile-table { width:100%; border-collapse:collapse; margin:0 0 26px; font-size:14px; }
+.profile-table th { text-align:left; font-weight:600; color:#777063; padding:9px 12px; width:132px; border-top:1px solid #e4dfd3; white-space:nowrap; text-transform:uppercase; font-size:11px; letter-spacing:.06em; }
+.profile-table td { padding:10px 12px; border-top:1px solid #e4dfd3; color:#2a261d; }
+.profile-table tr:last-child th, .profile-table tr:last-child td { border-bottom:1px solid #e4dfd3; }
+.dark .profile-header h3 { color:#f1ead9; }
+.dark .profile-table th { color:#9a8e72; border-top-color:#332f26; }
+.dark .profile-table td { color:#e6dfcf; border-top-color:#332f26; }
+.dark .profile-table tr:last-child th, .dark .profile-table tr:last-child td { border-bottom-color:#332f26; }
