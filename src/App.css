@@ -14,9 +14,50 @@ textarea { min-height:72px; resize:vertical; padding:10px; border:1px solid #d9d
 .status { border:0; cursor:pointer; }.status:disabled { cursor:default; opacity:.75; }.dark { background:#191815; color:#e8e3d8; }.dark main { color:#e8e3d8; }.dark .topbar h1, .dark h2, .dark h3, .dark td strong, .dark .record-card strong { color:#f6f0e4; }.dark .panel, .dark .summary-card, .dark .record-card, .dark .report-card, .dark .deal-modal { background:#25231e; border-color:#474235; color:#e8e3d8; }.dark th { background:#2a2822; color:#bdb3a2; }.dark td, .dark .section-subtitle, .dark .record-card p, .dark .report-card p { color:#c7bfb1; }.dark .secondary-button, .dark input, .dark select, .dark textarea { background:#302d26; border-color:#575043; color:#f6f0e4; }.dark .table-wrap, .dark td, .dark .panel-heading, .dark .deal-list, .dark .todo-list label, .dark .attention-row { border-color:#474235; }.dark .empty-callout, .dark .match-note, .dark .form-note { background:#393323; color:#f0d99d; }.dark .sidebar { background:#11100d; }
 .auth-screen { min-height:100vh; display:grid; place-items:center; padding:24px; background:#191815; }.auth-card { width:min(420px,100%); background:#fffdf9; padding:36px; border-radius:10px; box-shadow:0 20px 60px #0005; color:#252019; }.auth-card .brand-mark { margin-bottom:20px; }.auth-card h1 { margin:0; font:30px Georgia,serif; }.auth-card > p:not(.eyebrow) { color:#746b5d; font-size:13px; line-height:1.5; }.auth-card form { display:grid; gap:14px; margin:24px 0 12px; }.auth-card label { display:grid; gap:6px; color:#61584b; font-size:12px; font-weight:700; }.auth-card input { padding:11px; border:1px solid #d9d1c4; border-radius:5px; font:inherit; }.auth-card .primary-button { width:100%; }
 @media (max-width: 1060px) { .app-shell { grid-template-columns:72px minmax(0,1fr); }.sidebar { padding:25px 10px; }.brand { padding:0 9px 30px; }.brand > span:last-child, .nav-item:not(.active)::after, .nav-item { font-size:0; }.nav-item { justify-content:center; padding:12px; }.nav-item span { font-size:17px; }.sidebar-footer { font-size:0; text-align:center; }.online-dot { margin:0; }.summary-grid { grid-template-columns:repeat(2, 1fr); }.content-grid { grid-template-columns:1fr; }.side-panels { grid-template-columns:1fr 1fr; }.bottom-grid { grid-template-columns:1fr; } }
-@media (max-width: 680px) { .app-shell { display:block; }.sidebar { min-height:auto; padding:9px 12px; position:sticky; top:0; z-index:2; flex-direction:row; align-items:center; overflow-x:auto; }.brand { padding:0 15px 0 0; flex:none; }.sidebar nav { display:flex; gap:2px; }.nav-item { padding:8px; }.sidebar-footer { display:none; } main { padding:25px 16px 35px; }.topbar { align-items:flex-start; margin-bottom:24px; }.topbar h1 { font-size:26px; }.header-actions { gap:7px; }.profile, .icon-button { display:none; }.primary-button { padding:9px 11px; }.summary-grid, .side-panels, .bottom-grid, .two-table, .ledger-cards, .report-grid { grid-template-columns:1fr; }.summary-card { padding:15px; }.register-row { align-items:flex-start; flex-wrap:wrap; }.register-row p { width:100%; margin:0; }.form-grid { grid-template-columns:1fr; }.span-two { grid-column:auto; }.deal-modal { max-height:calc(100vh - 30px); overflow:auto; }.modal-heading, .deal-modal form { padding-left:20px; padding-right:20px; } }
+@media (max-width: 680px) { .app-shell { display:block; }.sidebar { min-height:auto; padding:9px 12px; position:sticky; top:0; z-index:2; flex-direction:row; align-items:center; overflow-x:auto; }.brand { padding:0 15px 0 0; flex:none; }.sidebar nav { display:flex; gap:2px; }.nav-item { padding:9px 11px; font-size:12px; display:flex; gap:6px; align-items:center; white-space:nowrap; }.nav-item span { font-size:14px; }.sidebar-footer { display:none; } main { padding:25px 16px 35px; }.topbar { align-items:flex-start; margin-bottom:24px; }.topbar h1 { font-size:26px; }.header-actions { gap:7px; }.profile, .icon-button { display:none; }.primary-button { padding:9px 11px; }.summary-grid, .side-panels, .bottom-grid, .two-table, .ledger-cards, .report-grid { grid-template-columns:1fr; }.summary-card { padding:15px; }.register-row { align-items:flex-start; flex-wrap:wrap; }.register-row p { width:100%; margin:0; }.form-grid { grid-template-columns:1fr; }.span-two { grid-column:auto; }.deal-modal { max-height:calc(100vh - 30px); overflow:auto; }.modal-heading, .deal-modal form { padding-left:20px; padding-right:20px; } }
 
 .optional-tag { font-weight: 400; font-size: 0.75em; opacity: 0.6; margin-left: 4px; }
 .danger-link.small { font-size: 0.85em; padding: 2px 8px; }
 
 .dashboard-party-name { display: block; font-size: 1.15em; line-height: 1.4; }
+
+/* Mobile responsiveness polish
+   - Readable, tappable bottom "sheet" forms on phones
+   - Comfortable touch targets and compact chrome on small screens
+   - A dedicated breakpoint for the thinnest devices
+*/
+@media (max-width: 680px) {
+  .modal-backdrop { padding:0; align-items:end; }
+  .deal-modal { width:100%; max-height:88vh; border-radius:12px 12px 0 0; display:flex; flex-direction:column; }
+  .deal-modal form { overflow:auto; }
+  .modal-heading { padding:20px 20px 16px; flex-shrink:0; }
+  .deal-modal form .form-actions { position:sticky; bottom:0; background:#fffdf9; padding:14px 0 6px; }
+  .dark .deal-modal form .form-actions { background:#25231e; }
+  .two-table { grid-template-columns:1fr; }
+  .two-table h3 { margin-top:8px; }
+  .profile, .icon-button { display:none; }
+  .sidebar-footer { display:none; }
+}
+
+/* Thinnest phones (≤480px) */
+@media (max-width: 480px) {
+  .brand > span:last-child { display:none; }
+  .brand { padding-right:8px; }
+  .brand-mark { width:30px; height:30px; font-size:12px; }
+  .topbar { flex-direction:column; align-items:stretch; gap:14px; }
+  .topbar h1 { font-size:23px; }
+  .header-actions { justify-content:space-between; }
+  .header-actions .secondary-button { flex:1; }
+  .header-actions .primary-button { flex:1; text-align:center; }
+  .topbar h1, .panel-heading h2 { letter-spacing:0; }
+  main { padding:20px 12px 30px; }
+  .summary-card { padding:13px; }
+  .summary-card strong { font-size:21px; }
+  .panel-heading { padding:16px 16px 13px; }
+  .panel-heading h2 { font-size:18px; }
+  .table-wrap table { min-width:600px; }
+  .primary-button, .secondary-button { padding:10px 12px; font-size:13px; }
+  .toast { margin:-10px 0 16px; font-size:12px; padding:9px 11px; }
+  .nav-item { font-size:11px; padding:8px 9px; }
+  .nav-item span { font-size:13px; }
+}
