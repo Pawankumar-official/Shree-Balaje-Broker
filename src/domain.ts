@@ -14,9 +14,21 @@ export type Todo = { id: string; text: string; done: boolean; due: string }
 
 export type AppData = { parties: Party[]; deals: Deal[]; dealTrips: DealTrip[]; payments: Payment[]; obligations: PaymentObligation[]; transporters: Transporter[]; trucks: Truck[]; offers: Offer[]; requirements: Requirement[]; todos: Todo[] }
 
-export const today = '2026-09-06'
+const pad = (value: number) => String(value).padStart(2, '0')
+// Computed fresh from the device clock every time the app loads/refreshes — never hardcoded.
+export const today = (() => { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` })()
 export const stages: DealStage[] = ['Matching', 'Truck Assigned', 'In Transit', 'Delivered', 'Payment Pending', 'Closed']
 export const currency = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 })
+// Converts an ISO 'YYYY-MM-DD' date (as used by <input type="date">) to display format DD/MM/YYYY.
+// Leaves anything that isn't a plain ISO date untouched, and returns '—' for empty/missing values.
+export const formatDate = (value?: string | null) => {
+  if (!value) return '—'
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value)
+  if (!match) return value
+  const [, year, month, day] = match
+  return `${day}/${month}/${year}`
+}
+export const todayDisplay = () => formatDate(today)
 
 export const demoData: AppData = {
   parties: [
