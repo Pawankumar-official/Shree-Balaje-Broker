@@ -3,7 +3,7 @@ export type LedgerType = 'Commodity' | 'Buyer Commission' | 'Seller Commission'
 
 export type Party = { id: string; name: string; phone: string; location: string; trust: 'High' | 'Normal' | 'Watch'; notes: string }
 export type Deal = { id: string; dealDate: string; dailySerial: number; monthlySerial: number; buyerId: string; sellerId: string; commodity: string; quantity: number; rate: number; route: string; stage: DealStage; truck: string; expectedPayment: string; cancelledReason?: string }
-export type DealTrip = { id: string; dealId: string; transporterId: string; truckNumber: string; freight: number; assignedDate: string; notes: string }
+export type DealTrip = { id: string; dealId: string; transporterId: string; truckNumber: string; driverPhone: string; freight: number; assignedDate: string; notes: string }
 export type Payment = { id: string; dealId: string; ledger: LedgerType; amount: number; date: string; note: string }
 export type PaymentObligation = { id: string; dealId: string; ledger: LedgerType; amount: number; expectedPayment: string }
 export type Transporter = { id: string; name: string; phone: string; routes: string; reliability: 'High' | 'Normal' | 'Watch' }
@@ -40,8 +40,8 @@ export const demoData: AppData = {
     { id: 'p6', name: 'Sonal Enterprises', phone: '98765 41006', location: 'Sasaram', trust: 'Normal', notes: '' },
   ],
   dealTrips: [
-    { id: 'trip1', dealId: 'd17', transporterId: 't1', truckNumber: 'BR 01 GK 4821', freight: 85000, assignedDate: today, notes: '' },
-    { id: 'trip2', dealId: 'd18', transporterId: 't2', truckNumber: 'BR 21 GA 7612', freight: 62000, assignedDate: today, notes: '' },
+    { id: 'trip1', dealId: 'd17', transporterId: 't1', truckNumber: 'BR 01 GK 4821', driverPhone: '', freight: 85000, assignedDate: today, notes: '' },
+    { id: 'trip2', dealId: 'd18', transporterId: 't2', truckNumber: 'BR 21 GA 7612', driverPhone: '', freight: 62000, assignedDate: today, notes: '' },
   ],
   deals: [
     { id: 'd17', dealDate: today, dailySerial: 1, monthlySerial: 17, buyerId: 'p1', sellerId: 'p2', commodity: 'Paddy', quantity: 420, rate: 2350, route: 'Buxar → Patna', stage: 'In Transit', truck: 'BR 01 GK 4821', expectedPayment: '2026-09-08' },
